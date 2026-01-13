@@ -37,7 +37,24 @@ boot-stack-size = 0x40000                       # uint
 #
 [devices]
 # MMIO ranges with format (`base_paddr`, `size`).
-mmio-ranges = [[0x0, 0x4000_0000]]  # [(uint, uint)]
+mmio-ranges = [
+    [0x0200_0000, 0x10000], # CLINT
+    [0x0201_0000, 0x4000], # cache_flush
+    [0x0c00_0000, 0x4000000], # PLIC
+    [0x1000_0000, 0x10000], # UART0 (console)
+    [0x1001_0000, 0x10000], # UART1
+    [0x1302_0000, 0x10000], # System Clock/Reset Controller (syscrg)
+    [0x1303_0000, 0x10000], # System Control Registers (syscon) - PHY interface config
+    [0x1304_0000, 0x10000], # GPIO
+    [0x1601_0000, 0x10000], # SDIO0
+    [0x1602_0000, 0x10000], # SDIO1
+    [0x1603_0000, 0x10000], # DWMAC0 (ethernet@16030000)
+    [0x1604_0000, 0x10000], # DWMAC1 (ethernet@16040000)
+    [0x1700_0000, 0x10000], # Always-On Clock/Reset Controller (aoncrg) - WORKING DRIVER REQUIREMENT
+    [0x1703_0000, 0x10000], # PMU (Power Management Unit)
+    [0x1704_0000, 0x10000], # RTC (goldfish)
+] # [(uint, uint)]
+
 # VirtIO MMIO ranges with format (`base_paddr`, `size`).
 virtio-mmio-ranges = []             # [(uint, uint)]
 # Base physical address of the PCIe ECAM space.
@@ -89,6 +106,8 @@ plic-paddr = 0x0c00_0000            # uint
 uart-paddr = 0x1000_0000            # uint
 uart-irq = 0x20                     # uint
 
+root-partition-name = "root"    # str
+
 # mmc1: mmc@16020000 {
 #     compatible = "starfive,jh7110-mmc";
 #     reg = <0x0 0x16020000 0x0 0x10000>;
@@ -105,3 +124,8 @@ uart-irq = 0x20                     # uint
 #     status = "disabled";
 # };
 sdmmc-paddr = 0x1602_0000           # uint
+
+ethernet0-paddr = 0x16030000        # uint
+ethernet1-paddr = 0x16040000        # uint
+ethernet0-irq = 0x07                # uint
+ethernet1-irq = 0x4e                # uint
