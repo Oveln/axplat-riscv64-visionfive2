@@ -23,36 +23,52 @@ $ make vf2 LOG=debug
 
 内核镜像文件位于 `StarryOS_visionfive2.bin`
 
-### 2. 准备 SD 卡
+### 2. 准备 SD 卡（临时方案）
 
-TODO: 初始化分区表、OpenSBI 等
+> **注意**：由于当前 SD 卡驱动不支持多分区，GPT 分区表存在问题，以下为临时启动方案。
 
-### 3. 准备启动分区
+#### 2.1 刷写 rootfs 到整个磁盘
 
-1. 创建一个 FAT32 格式的分区
-2. 将编译好的内核镜像文件拷贝至根目录并重命名为 `kernel`
-3. 创建文件 `vf2_uEnv.txt`，写入以下内容：
-   ```
-   boot2=load mmc 1:3 $kernel_addr_r kernel; go $kernel_addr_r
-   ```
-   其中 `1:3` 代表 1 号卡槽的分区 3，请根据实际情况调整；环境变量中 `kernel_addr_r` 应为 `0x40200000`，如果不是的话请在此文件中进行覆盖
+将 rootfs 镜像直接刷写到整个 SD 卡（这里假设 SD 卡设备为 `/dev/sda`）：
 
-到这里，应当可以成功进入 ArceOS 并打印调试信息
+```bash
+# 刷写镜像
+sudo dd if=rootfs-riscv64.img of=/dev/sda status=progress bs=4M conv=fsync
 
-### 4. 准备文件系统
+# 扩展文件系统到整个磁盘
+sudo resize2fs /dev/sda
+```
 
-1. 创建一个 ext4 格式的分区，并将“分区名称”设置为 `root`（注意不是卷标）；这里假设创建的分区是 `/dev/sda4`
-2. 将 rootfs 刷写到此分区，如：
+#### 2.2 部署 kernel 和启动配置
+
+刷写完成后，需要将内核镜像和启动配置文件放入 rootfs 中：
+
+1. 挂载 SD 卡：
    ```bash
-   sudo dd if=rootfs-riscv64.img of=/dev/sda4 status=progress bs=4M conv=fsync
-   ```
-   推荐先多次使用 `resize2fs -M xxx.img` 尽可能压缩镜像文件大小以加快刷写速度
-3. 更新文件系统大小，扩大到整个分区：
-   ```bash
-   sudo resize2fs /dev/sda4
+   sudo mount /dev/sda /mnt
    ```
 
-至此，应当可以进入 Starry OS 的命令行进行交互，不过由于目前还未实现网卡驱动，所以无法使用 apk 安装软件包，可以在创建基础文件系统后，将需要运行的软件拷贝至文件系统。
+2. 将编译好的内核镜像文件拷贝至 rootfs 根目录并重命名为 `kernel`：
+   ```bash
+   sudo cp StarryOS_visionfive2.bin /mnt/
+   ```
+
+3. 创建 `vf2_uEnv.txt` 配置文件：
+   ```bash
+   sudo tee /mnt/vf2_uEnv.txt > /dev/null << 'EOF'
+   kernel_addr_r=0x40200000
+   boot2=load mmc 1 $kernel_addr_r kernel; go $kernel_addr_r
+   EOF
+   ```
+
+4. 卸载 SD 卡：
+   ```bash
+   sudo umount /mnt
+   ```
+
+到这里，应当可以成功进入 Starry OS 并打印调试信息。
+
+**注意**：由于目前还未实现网卡驱动，无法使用 apk 安装软件包，可以在创建基础文件系统后，将需要运行的软件拷贝至文件系统。
 
 ## TODO
 
