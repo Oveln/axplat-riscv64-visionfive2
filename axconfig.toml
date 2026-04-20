@@ -53,6 +53,7 @@ mmio-ranges = [
     [0x1700_0000, 0x10000], # Always-On Clock/Reset Controller (aoncrg) - WORKING DRIVER REQUIREMENT
     [0x1703_0000, 0x10000], # PMU (Power Management Unit)
     [0x1704_0000, 0x10000], # RTC (goldfish)
+    [0xc800_0000, 0x10000], # Ov_channel Shared Memory
 ] # [(uint, uint)]
 
 # VirtIO MMIO ranges with format (`base_paddr`, `size`).
